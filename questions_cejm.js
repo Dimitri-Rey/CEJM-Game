@@ -1523,7 +1523,7 @@ function loadQuestion() {
                     feedbackElement.innerHTML = `Mauvaise réponse... 😢<br>La bonne réponse était : <strong>${correctAnswer}</strong>`;
                 }
                 scoreElement.innerHTML = score;
-                setTimeout(loadQuestion, 4000); // La réponse reste affichée 4 secondes
+                setTimeout(loadQuestion, 3000); // La réponse reste affichée 4 secondes
             });
             cardsContainer.appendChild(card);
         }
