@@ -1482,6 +1482,18 @@ const feedbackElement = document.getElementById("feedback");
 const chapterElement = document.getElementById("chapter");
 const partElement = document.getElementById("part");
 
+// Fonction pour mélanger un tableau (algorithme de Fisher-Yates)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]; // Échange des éléments
+    }
+}
+
+// Mélanger les questions au chargement de la page
+shuffleArray(questions);
+
+
 function loadQuestion() {
     const randomIndex = Math.floor(Math.random() * questions.length);
     const currentQuestion = questions[randomIndex];
