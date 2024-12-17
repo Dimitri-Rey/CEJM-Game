@@ -1472,8 +1472,9 @@ const questions = [
 
     // Ajoute toutes les autres questions ici
 ];
-
 let score = 0;
+let questionQueue = []; // La file d'attente des questions mélangées
+let failedQuestions = []; // Liste des questions échouées
 
 const questionElement = document.getElementById("question");
 const cardsContainer = document.getElementById("cards");
@@ -1482,21 +1483,40 @@ const feedbackElement = document.getElementById("feedback");
 const chapterElement = document.getElementById("chapter");
 const partElement = document.getElementById("part");
 
-// Fonction pour mélanger un tableau (algorithme de Fisher-Yates)
+// Fonction pour mélanger un tableau (Fisher-Yates)
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]]; // Échange des éléments
+        [array[i], array[j]] = [array[j], array[i]];
     }
 }
 
-// Mélanger les questions au chargement de la page
-shuffleArray(questions);
+// Initialiser les questions en les mélangeant
+function initializeGame() {
+    questionQueue = [...questions]; // Crée une copie des questions
+    shuffleArray(questionQueue); // Mélange la file d'attente
+    failedQuestions = []; // Réinitialise les questions échouées
+    score = 0;
+    scoreElement.innerHTML = score;
+    loadQuestion();
+}
 
-
+// Charger la prochaine question depuis la file d'attente
 function loadQuestion() {
-    const randomIndex = Math.floor(Math.random() * questions.length);
-    const currentQuestion = questions[randomIndex];
+    if (questionQueue.length === 0 && failedQuestions.length === 0) {
+        feedbackElement.innerHTML = `🎉 Fin du jeu ! Votre score final est : ${score} 🎉`;
+        return;
+    }
+
+    // Rejouer les questions échouées si la file est vide
+    if (questionQueue.length === 0 && failedQuestions.length > 0) {
+        questionQueue = [...failedQuestions];
+        shuffleArray(questionQueue);
+        failedQuestions = [];
+        feedbackElement.innerHTML = "<strong>Deuxième chance ! Voici les questions échouées :</strong>";
+    }
+
+    const currentQuestion = questionQueue.shift(); // Prend la première question
 
     questionElement.innerHTML = currentQuestion.question;
     chapterElement.innerHTML = currentQuestion.chapter;
@@ -1505,30 +1525,43 @@ function loadQuestion() {
     cardsContainer.innerHTML = "";
     feedbackElement.innerHTML = "";
 
-    const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
-
-    shuffledChoices.forEach((choice, index) => {
-        if (choice) {
+    // Mélanger les choix de réponses pour cette question
+    const shuffledChoices = [...currentQuestion.choices];
+    shuffledChoices.forEach((choice) => {
+        if (choice.trim() !== "") { // Vérifie que la réponse n'est pas vide
             const card = document.createElement("div");
             card.classList.add("card");
-            card.innerHTML = choice; // Retiré `${index + 1}.` pour ne pas afficher le numéro
+            card.innerHTML = choice;
+    
             card.addEventListener("click", () => {
-                const correctAnswer = currentQuestion.choices[currentQuestion.correct];
-                if (choice === correctAnswer) {
-                    card.classList.add("correct");
-                    score++;
-                    feedbackElement.innerHTML = "Bonne réponse ! 🎉";
-                } else {
-                    card.classList.add("incorrect");
-                    feedbackElement.innerHTML = `Mauvaise réponse... 😢<br>La bonne réponse était : <strong>${correctAnswer}</strong>`;
+                if (!cardsContainer.classList.contains("disabled")) {
+                    cardsContainer.classList.add("disabled"); // Désactive les clics
+                    const correctAnswer = currentQuestion.choices[currentQuestion.correct];
+    
+                    if (choice === correctAnswer) {
+                        card.classList.add("correct");
+                        score++;
+                        feedbackElement.innerHTML = "Bonne réponse ! 🎉";
+                    } else {
+                        card.classList.add("incorrect");
+                        feedbackElement.innerHTML = `Mauvaise réponse... 😢<br>La bonne réponse était : <strong>${correctAnswer}</strong>`;
+                        failedQuestions.push(currentQuestion); // Ajouter aux questions échouées
+                    }
+    
+                    scoreElement.innerHTML = score;
+    
+                    setTimeout(() => {
+                        cardsContainer.classList.remove("disabled");
+                        loadQuestion(); // Charger la prochaine question
+                    }, 3000);
                 }
-                scoreElement.innerHTML = score;
-                setTimeout(loadQuestion, 3000); // La réponse reste affichée 4 secondes
             });
+    
             cardsContainer.appendChild(card);
         }
     });
-     
+    
 }
 
-window.onload = loadQuestion;
+// Démarrer le jeu
+window.onload = initializeGame;
