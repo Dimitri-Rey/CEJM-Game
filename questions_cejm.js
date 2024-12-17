@@ -1473,8 +1473,9 @@ const questions = [
     // Ajoute toutes les autres questions ici
 ];
 let score = 0;
-let questionQueue = []; // La file d'attente des questions mélangées
+let questionQueue = []; // File d'attente pour les questions mélangées
 let failedQuestions = []; // Liste des questions échouées
+let currentQuestion = null; // Question en cours
 
 const questionElement = document.getElementById("question");
 const cardsContainer = document.getElementById("cards");
@@ -1491,77 +1492,77 @@ function shuffleArray(array) {
     }
 }
 
-// Initialiser les questions en les mélangeant
+// Initialiser les questions
 function initializeGame() {
-    questionQueue = [...questions]; // Crée une copie des questions
-    shuffleArray(questionQueue); // Mélange la file d'attente
-    failedQuestions = []; // Réinitialise les questions échouées
+    questionQueue = [...questions]; // Copie des questions
+    shuffleArray(questionQueue); // Mélanger les questions
+    failedQuestions = []; // Réinitialiser les questions échouées
     score = 0;
     scoreElement.innerHTML = score;
-    loadQuestion();
+    loadNextQuestion();
 }
 
-// Charger la prochaine question depuis la file d'attente
-function loadQuestion() {
-    if (questionQueue.length === 0 && failedQuestions.length === 0) {
-        feedbackElement.innerHTML = `🎉 Fin du jeu ! Votre score final est : ${score} 🎉`;
-        return;
+// Charger la prochaine question
+function loadNextQuestion() {
+    if (questionQueue.length === 0) {
+        if (failedQuestions.length > 0) {
+            questionQueue = [...failedQuestions];
+            failedQuestions = [];
+            shuffleArray(questionQueue); // Mélanger les questions échouées
+            feedbackElement.innerHTML = "<strong>Deuxième chance ! Voici les questions échouées :</strong>";
+        } else {
+            feedbackElement.innerHTML = `🎉 Fin du jeu ! Votre score final est : ${score} 🎉`;
+            return;
+        }
     }
 
-    // Rejouer les questions échouées si la file est vide
-    if (questionQueue.length === 0 && failedQuestions.length > 0) {
-        questionQueue = [...failedQuestions];
-        shuffleArray(questionQueue);
-        failedQuestions = [];
-        feedbackElement.innerHTML = "<strong>Deuxième chance ! Voici les questions échouées :</strong>";
-    }
+    currentQuestion = questionQueue.shift(); // Extraire la première question
+    displayQuestion(currentQuestion);
+}
 
-    const currentQuestion = questionQueue.shift(); // Prend la première question
-
-    questionElement.innerHTML = currentQuestion.question;
-    chapterElement.innerHTML = currentQuestion.chapter;
-    partElement.innerHTML = currentQuestion.part;
+function displayQuestion(question) {
+    questionElement.innerHTML = question.question;
+    chapterElement.innerHTML = question.chapter;
+    partElement.innerHTML = question.part;
 
     cardsContainer.innerHTML = "";
     feedbackElement.innerHTML = "";
 
-    // Mélanger les choix de réponses pour cette question
-    const shuffledChoices = [...currentQuestion.choices];
+    const shuffledChoices = [...question.choices];
+    shuffleArray(shuffledChoices);
+
     shuffledChoices.forEach((choice) => {
-        if (choice.trim() !== "") { // Vérifie que la réponse n'est pas vide
+        if (choice.trim() !== "") {
             const card = document.createElement("div");
             card.classList.add("card");
             card.innerHTML = choice;
-    
-            card.addEventListener("click", () => {
-                if (!cardsContainer.classList.contains("disabled")) {
-                    cardsContainer.classList.add("disabled"); // Désactive les clics
-                    const correctAnswer = currentQuestion.choices[currentQuestion.correct];
-    
-                    if (choice === correctAnswer) {
-                        card.classList.add("correct");
-                        score++;
-                        feedbackElement.innerHTML = "Bonne réponse ! 🎉";
-                    } else {
-                        card.classList.add("incorrect");
-                        feedbackElement.innerHTML = `Mauvaise réponse... 😢<br>La bonne réponse était : <strong>${correctAnswer}</strong>`;
-                        failedQuestions.push(currentQuestion); // Ajouter aux questions échouées
-                    }
-    
-                    scoreElement.innerHTML = score;
-    
-                    setTimeout(() => {
-                        cardsContainer.classList.remove("disabled");
-                        loadQuestion(); // Charger la prochaine question
-                    }, 3000);
-                }
-            });
-    
+
+            card.addEventListener("click", () => handleAnswer(choice));
             cardsContainer.appendChild(card);
         }
     });
-    
+}
+
+function handleAnswer(selectedChoice) {
+    const correctAnswer = currentQuestion.choices[currentQuestion.correct];
+    cardsContainer.classList.add("disabled"); // Désactiver les clics après réponse
+
+    if (selectedChoice === correctAnswer) {
+        feedbackElement.innerHTML = "Bonne réponse ! 🎉";
+        score++;
+    } else {
+        feedbackElement.innerHTML = `Mauvaise réponse... 😢<br>La bonne réponse était : <strong>${correctAnswer}</strong>`;
+        failedQuestions.push(currentQuestion); // Ajouter la question échouée
+    }
+
+    scoreElement.innerHTML = score;
+
+    setTimeout(() => {
+        cardsContainer.classList.remove("disabled");
+        loadNextQuestion();
+    }, 3000); // Temps avant la prochaine question
 }
 
 // Démarrer le jeu
 window.onload = initializeGame;
+
