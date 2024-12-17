@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEJM Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>CEJM Game</h1>
+        <p>Testez vos connaissances sur le cours CEJM !</p>
+    </header>
+
+    <div id="game-container">
+        <div id="score-board">
+            <div>Score : <span id="score">0</span></div>
+            <div>Chapitre : <span id="chapter"></span> | Partie : <span id="part"></span></div>
+        </div>
+        <div class="question" id="question">Chargement...</div>
+        <div class="cards" id="cards"></div>
+        <div id="feedback"></div>
+    </div>
+
+    <script src="questions_cejm.js"></script>
+</body>
+</html>
